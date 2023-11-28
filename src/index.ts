@@ -1,102 +1,100 @@
-// WebSocket.ts
-
 class GWsClient {
   checkConnectionJSONObj = {
     type: "checkConnection",
     data: {},
-  };
-
-  checkConnectionJSONOStr: string = JSON.stringify(this.checkConnectionJSONObj);
-
-  selectedParamGroupIndex: number = 0;
-
-  wsStatus: number = 0;
-  wsDisconnected: number = 0;
-  wsConnecting: number = 1;
-  wsConnected: number = 2;
-
-  wsConnectingTimer: number = 0;
-  wsConnectingTimeOut: number = 30;
-
-  wsSendConnectionMsgTimer: number = 0;
-  wsSendConnectionMsgTimeOut: number = 30;
-
-  wsResponseWaitingTimer: number = 0;
-  wsResponseWaitingTimeOut: number = 30;
-
-  responseWaiting: number = 0;
-
-  requestId: number = 0;
-  serverIp: string;
-  ws: WebSocket | null = null;
-  connectionListener: (() => void) | undefined;
-  disconnectionListener: (() => void) | undefined;
-  msgListener: ((message: string) => void) | undefined;
-
-  connectInterval: ReturnType<typeof setTimeout> | null = null;
-
-  constructor(serverIp: string) {
-    this.serverIp = serverIp;
   }
 
-  connect() {
+  checkConnectionJSONOStr: string = JSON.stringify(this.checkConnectionJSONObj)
+
+  selectedParamGroupIndex: number = 0
+
+  wsStatus: number = 0
+  wsDisconnected: number = 0
+  wsConnecting: number = 1
+  wsConnected: number = 2
+
+  wsConnectingTimer: number = 0
+  wsConnectingTimeOut: number = 30
+
+  wsSendConnectionMsgTimer: number = 0
+  wsSendConnectionMsgTimeOut: number = 30
+
+  wsResponseWaitingTimer: number = 0
+  wsResponseWaitingTimeOut: number = 30
+
+  responseWaiting: number = 0
+
+  requestId: number = 0
+  serverIp: string
+  ws: WebSocket | null = null
+  connectionListener: (() => void) | undefined
+  disconnectionListener: (() => void) | undefined
+  msgListener: ((message: any) => void) | undefined
+
+  connectInterval: ReturnType<typeof setTimeout> | null = null
+
+  constructor(serverIp: string) {
+    this.serverIp = serverIp
+  }
+
+  connect = () => {
     if (
       this.wsStatus !== this.wsConnected &&
       this.wsStatus !== this.wsConnecting
     ) {
       if (this.ws != null) {
         try {
-          this.ws.close();
+          this.ws.close()
         } catch (e) {
-          console.warn(e);
+          console.warn(e)
         }
       }
-      this.ws = null;
-      this.connectWebSocket();
-      this.wsStatus = this.wsConnecting;
+      this.ws = null
+      this.connectWebSocket()
+      this.wsStatus = this.wsConnecting
     }
     this.connectInterval = setInterval(
       this.connectionCheckTimerFunc.bind(this),
       1000
-    );
+    )
   }
 
-  connectionCheckTimerFunc() {
+  connectionCheckTimerFunc = () => {
     if (this.wsStatus === this.wsConnecting) {
       if (++this.wsConnectingTimer === this.wsConnectingTimeOut) {
-        this.wsConnectingTimer = 0;
-        this.wsStatus = this.wsDisconnected;
+        this.wsConnectingTimer = 0
+        this.wsStatus = this.wsDisconnected
       }
     } else {
-      this.wsConnectingTimer = 0;
+      this.wsConnectingTimer = 0
     }
 
     if (this.wsStatus === this.wsConnected) {
       if (this.responseWaiting === 0) {
-        //this.ws?.send(`${this.wsSendConnectionMsgTimer}`);
+        //this.ws?.send(`${this.wsSendConnectionMsgTimer}`)
         if (
           ++this.wsSendConnectionMsgTimer === this.wsSendConnectionMsgTimeOut
         ) {
-          this.wsSendConnectionMsgTimer = 0;
-          this.responseWaiting = 1;
+          this.wsSendConnectionMsgTimer = 0
+          this.responseWaiting = 1
           try {
-            this.ws?.send(this.checkConnectionJSONOStr);
+            this.ws?.send(this.checkConnectionJSONOStr)
           } catch (e) {
-            console.error(e);
+            console.error(e)
           }
         }
       } else if (this.responseWaiting === 1) {
-        //this.ws?.send(`${this.wsResponseWaitingTimer}`);
+        //this.ws?.send(`${this.wsResponseWaitingTimer}`)
         if (++this.wsResponseWaitingTimer === this.wsResponseWaitingTimeOut) {
-          this.responseWaiting = 0;
-          this.wsResponseWaitingTimer = 0;
-          this.wsStatus = this.wsDisconnected;
+          this.responseWaiting = 0
+          this.wsResponseWaitingTimer = 0
+          this.wsStatus = this.wsDisconnected
         }
       }
     } else {
-      this.wsSendConnectionMsgTimer = 0;
-      this.wsResponseWaitingTimer = 0;
-      this.responseWaiting = 0;
+      this.wsSendConnectionMsgTimer = 0
+      this.wsResponseWaitingTimer = 0
+      this.responseWaiting = 0
     }
 
     if (
@@ -105,73 +103,72 @@ class GWsClient {
     ) {
       if (this.ws != null) {
         try {
-          this.ws.close();
+          this.ws.close()
         } catch (e) {
-          console.warn(e);
+          console.warn(e)
         }
       }
-      this.ws = null;
-      this.connectWebSocket();
-      this.wsStatus = this.wsConnecting;
+      this.ws = null
+      this.connectWebSocket()
+      this.wsStatus = this.wsConnecting
     }
   }
 
-  connectWebSocket() {
+  connectWebSocket = () => {
     if (this.ws == null) {
-      this.ws = new WebSocket(this.serverIp);
+      this.ws = new WebSocket(this.serverIp)
       this.ws.onopen = () => {
-        this.wsStatus = this.wsConnected;
-        if (this.connectionListener) this.connectionListener();
-      };
+        this.wsStatus = this.wsConnected
+        if (this.connectionListener) this.connectionListener()
+      }
       this.ws.onmessage = (evt) => {
-        this.responseWaiting = 0;
-        this.wsResponseWaitingTimer = 0;
-        this.wsSendConnectionMsgTimer = 0;
-        if (this.msgListener) this.msgListener(evt.data);
-      };
+        this.responseWaiting = 0
+        this.wsResponseWaitingTimer = 0
+        this.wsSendConnectionMsgTimer = 0
+        if (this.msgListener) this.msgListener(this.formatOutput(evt.data))
+      }
       this.ws.onclose = () => {
-        this.wsStatus = this.wsDisconnected;
-        if (this.disconnectionListener) this.disconnectionListener();
-      };
+        this.wsStatus = this.wsDisconnected
+        if (this.disconnectionListener) this.disconnectionListener()
+      }
     }
   }
 
-  disconnect() {
+  disconnect = () => {
     if (this.ws) {
-      this.ws.close();
+      this.ws.close()
     }
     if (this.connectInterval) {
-      clearInterval(this.connectInterval);
-      this.connectInterval = null;
+      clearInterval(this.connectInterval)
+      this.connectInterval = null
     }
   }
 
-  addConnectionListener(connectionListener: () => void) {
-    this.connectionListener = connectionListener;
+  addConnectionListener = (connectionListener: () => void) => {
+    this.connectionListener = connectionListener
   }
 
-  addDisconnectionListener(disconnectionListener: () => void) {
-    this.disconnectionListener = disconnectionListener;
+  addDisconnectionListener = (disconnectionListener: () => void) => {
+    this.disconnectionListener = disconnectionListener
   }
 
-  addMsgListener(msgListener: (message: string) => void) {
-    this.msgListener = msgListener;
+  addMsgListener = <T>(msgListener: (message: T) => void) => {
+    this.msgListener = msgListener
   }
 
-  send(message: string) {
+  send = <T>(message: T) => {
     if (this.ws != null && this.wsStatus === this.wsConnected) {
-      this.ws.send(message);
+      this.ws.send(typeof message === "object" ? JSON.stringify(message) : message as any)
     }
   }
 
-  isJson(str: string) {
+  formatOutput = (data: any) => {
     try {
-      JSON.parse(str);
+      return JSON.parse(data)
     } catch (e) {
-      return false;
+      return data
     }
-    return true;
   }
 }
 
-export default GWsClient;
+export default GWsClient
