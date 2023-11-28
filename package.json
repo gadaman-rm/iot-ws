@@ -1,6 +1,6 @@
 {
-  "name": "@gadaman/iot-ws",
-  "version": "0.0.0",
+  "name": "@gadaco/iot-ws",
+  "version": "0.0.1",
   "description": "ws client for iot devices",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
